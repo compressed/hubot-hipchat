@@ -21,7 +21,8 @@
   },
   "dependencies": {
     "node-expat": "1.6.1",
-    "wobot": "0.8.0"
+    "wobot": "0.8.0",
+    "node-xmpp": ">= 0.2.7"
   },
   "license": "MIT",
   "main": "./src/hipchat"

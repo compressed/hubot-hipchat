@@ -3,10 +3,32 @@ Adapter = require('hubot').Adapter
 TextMessage = require('hubot').TextMessage
 HTTPS = require 'https'
 Wobot = require('wobot').Bot
+xmpp = require 'node-xmpp'
+
+Wobot.prototype.message = (targetJid, message) ->
+  packet = null
+  parsedJid = new xmpp.JID(targetJid)
+
+  if (parsedJid.domain == "conf.hipchat.com")
+    packet = new xmpp.Element("message", {
+      to: "#{targetJid}/#{@name}",
+      type: "groupchat"
+    })
+  else
+    packet = new xmpp.Element("message", {
+      to: targetJid,
+      type: "chat",
+      from: @jid
+    })
+    packet.c("inactive", { xmlns: "http://jabber/protocol/chatstates" })
+
+  packet.c("body").t(message)
+  @jabber.send(packet)
 
 class HipChat extends Adapter
   send: (user, strings...) ->
     for str in strings
+      if !user.reply_to then user.reply_to = user.room
       @bot.message user.reply_to, str
 
   reply: (user, strings...) ->
@@ -75,7 +97,7 @@ class HipChat extends Adapter
     bot.onMessage (channel, from, message) ->
       author = (self.userForName from) or {}
       author.name = from unless author.name
-      author.reply_to = channel
+      author.reply_to = channel.replace('chat.hipchat.com', 'conf.hipchat.com')
       author.room = self.roomNameFromJid(channel)
 
       # reformat leading @mention name to be like "name: message" which is
